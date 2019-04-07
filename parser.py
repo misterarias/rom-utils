@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import json
 import os
 import re
 import sys
@@ -13,13 +14,15 @@ class GameLine(object):
         self.hardware = contents[7]
 
     def __str__(self):
-        return "[{hw}] {full} ({year}) --> {name}.zip".format(
-            hw = self.hardware,
-            full = self.full_name,
-            year = self.year,
-            name = self.rom_name
-        )
+        return "[{hardware}] {full_name} ({year}) --> {rom_name}.zip".format(**self.as_dict())
 
+    def as_dict(self):
+        return dict(
+            hardware = self.hardware,
+            full_name = self.full_name,
+            year = self.year,
+            rom_name = self.rom_name
+        )
 
 def _trim(string):
     return re.sub(r'(^\s*|\s*$)', '' , string)
@@ -54,9 +57,13 @@ def _parse_games(list, filters):
 
     return list
 
-def _print_results(game_list):
-    for gl in game_list:
-        print(gl)
+def _print_results(game_list, format='string'):
+    if format == 'string':
+        for gl in game_list:
+            print(gl)
+    elif format == 'json':
+        items = [ gl.as_dict() for gl in game_list]
+        print(json.dumps(items))
 
 def parse():
     parser = argparse.ArgumentParser(description='Process a gamelist.txt')
@@ -67,11 +74,13 @@ def parse():
 
     parser.add_argument('--name', '-n', dest='name', default=None,
                             help='Filter by Full Game name (regex)')
+    parser.add_argument('--format',  dest='format', default='string',
+                        choices=['string', 'json'], help='Choose output format')
 
     args = parser.parse_args()
     gamelist = _open_gamelist()
-    neo_geo = _parse_games(gamelist, args)
-    _print_results(neo_geo)
+    filtered_results = _parse_games(gamelist, args)
+    _print_results(filtered_results, args.format)
 
 if __name__ == '__main__':
     parse()
