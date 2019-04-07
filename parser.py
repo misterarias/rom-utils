@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import argparse
 import os
 import re
 import sys
@@ -39,24 +40,38 @@ def _open_gamelist():
 
     return game_list
 
-def _parse_games(list, hardware):
-    if not hardware:
-        return list
+def _parse_games(list, filters):
+    if filters.hardware:
+        hw_regex = r"(?i).*{}.*".format(filters.hardware)
+        list = [i for i in list if re.match(hw_regex, i.hardware) ]
 
-    hw_regex = r"(?i).*{}.*".format(hardware)
-    return [i for i in list if re.match(hw_regex, i.hardware) ]
+    if filters.year:
+        list = [i for i in list if i.year == filters.year ]
+
+    if filters.name:
+        name_regex = r"(?i).*{}.*".format(filters.name)
+        list = [i for i in list if re.match(name_regex, i.full_name) ]
+
+    return list
 
 def _print_results(game_list):
     for gl in game_list:
         print(gl)
 
-def parse(arguments):
-    hardware = None
-    if (len(arguments) > 0): hardware = arguments[0]
+def parse():
+    parser = argparse.ArgumentParser(description='Process a gamelist.txt')
+    parser.add_argument('--year', '-y', dest='year', default=None,
+                            help='Filter by year')
+    parser.add_argument('--hardware', '-hw', dest='hardware', default=None,
+                            help='Filter by Hardware (regex)')
 
+    parser.add_argument('--name', '-n', dest='name', default=None,
+                            help='Filter by Full Game name (regex)')
+
+    args = parser.parse_args()
     gamelist = _open_gamelist()
-    neo_geo = _parse_games(gamelist, hardware)
+    neo_geo = _parse_games(gamelist, args)
     _print_results(neo_geo)
 
 if __name__ == '__main__':
-    parse(sys.argv[1:])
+    parse()
