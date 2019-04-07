@@ -43,17 +43,18 @@ def _open_gamelist():
 
     return game_list
 
+def __get_regex_for(string):
+    return r"(?i).*{}.*".format(string)
+
 def _parse_games(list, filters):
     if filters.hardware:
-        hw_regex = r"(?i).*{}.*".format(filters.hardware)
-        list = [i for i in list if re.match(hw_regex, i.hardware) ]
+        list = [i for i in list if re.match(__get_regex_for(filters.hardware), i.hardware) ]
 
     if filters.year:
         list = [i for i in list if i.year == filters.year ]
 
     if filters.name:
-        name_regex = r"(?i).*{}.*".format(filters.name)
-        list = [i for i in list if re.match(name_regex, i.full_name) ]
+        list = [i for i in list if re.match(__get_regex_for(filters.name), i.full_name) ]
 
     return list
 
@@ -71,7 +72,6 @@ def parse():
                             help='Filter by year')
     parser.add_argument('--hardware', '-hw', dest='hardware', default=None,
                             help='Filter by Hardware (regex)')
-
     parser.add_argument('--name', '-n', dest='name', default=None,
                             help='Filter by Full Game name (regex)')
     parser.add_argument('--format',  dest='format', default='string',
